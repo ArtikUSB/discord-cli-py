@@ -209,7 +209,6 @@ async def server_chat_connect(chat, server):
             user = utils.get(server.text_channels, name=chat)
             if user != None:
                 await user.send(sendmsg)
-            messages.append({"username": bot.user.name, "content": sendmsg, "replied": None})
             system("cls")
             for msg in messages:
                 replymsg = msg["replied"]

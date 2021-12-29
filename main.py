@@ -23,7 +23,7 @@ def clear():
 
 clear()
 print(figlet_format("Discord-CLI", font="big"),
-      figlet_format("Version 1.0.0"), figlet_format("by aylonn and PosReady"))
+      figlet_format("Version 1.0.0"), figlet_format("by aylonnn and PosReady"))
 
 
 bot = commands.Bot(command_prefix=".",
@@ -42,10 +42,22 @@ async def on_connect():
 @bot.event
 async def on_message(message):
     if message.content:
-        if message.channel == current_chat:
-            messages.append({"username": message.author.name,
-                             "content": message.content})
-            print(message.author.name, ": ", message.content)
+        if message.author == (bot.user.name + "#" + bot.user.discriminator) or message.channel == current_chat or message.author == current_chat:
+            replymsg = None
+            try:
+                replymsg = await message.channel.fetch_message(message.reference.message_id)
+                messages.append(
+                        {"username": message.author.name,
+                        "content": message.content, "replied": replymsg})
+            except:
+                messages.append(
+                        {"username": message.author.name,
+                        "content": message.content, "replied": None})
+            if replymsg != None:
+                print(message.author.name, ": ", message.content, " | ответил(-а) на сообщение", replymsg.content)
+            else:
+                print(message.author.name, ": ", message.content)
+            
             await bot.wait_until_ready()
 
 
@@ -65,6 +77,18 @@ async def show_profile():
 
 
 async def start():
+    print('''
+        *****************************************
+        *        Список комманд                 *
+        *                                       *
+        * 1. friends - список друзей            *
+        *                                       *
+        * 2. listenchat - чат с другом          *
+        *                                       *
+        * 3. server - присоединиться к серверу  *
+        *                                       *
+        *****************************************
+        ''')
     cmd = input(">> ")
     while cmd != "exit":
         if cmd == "friends":
@@ -81,26 +105,62 @@ async def start():
                 print("error")
             cmd = input(">> ")
         if cmd == "listenchat":
-            name = input("Name: ")
+            friends = []
+            for user in bot.user.friends:
+                friends.append(user.name)
+            for friend in friends:
+                print(f"{friends.index(friend)}. {friend}\n")
+            print("exit - выход")
+            name = input("Выбор: ")
+            if name == "exit":
+                cmd = input(">> ")
+                continue
             global current_chat
-            current_chat = utils.get(bot.user.friends, name=name)
+            try:
+                current_chat = utils.get(bot.user.friends, name=friends[int(name)])
+            except:
+                print("Ошибка!")
+                await start()
             msgs = await current_chat.history(limit=None).flatten()
             msgs.reverse()
             for message in msgs:
-                messages.append(
-                    {"username": message.author.name,
-                     "content": message.content})
-            await restart_console(name)
+                try:
+                    replymsg = await message.channel.fetch_message(message.reference.message_id)
+                    messages.append(
+                        {"username": message.author.name,
+                        "content": message.content, "replied": replymsg})
+                except:
+                    messages.append(
+                        {"username": message.author.name,
+                        "content": message.content, "replied": None})
+            await restart_console(friends[int(name)])
+            break
+        if cmd == "server":
+            servers = []
+            for server in bot.guilds:
+                servers.append(server.name)
+            for server in servers:
+                print(f"{servers.index(server)}. {server}\n")
+            print("exit - выход")
+            name = input("Выбор: ")
+            if name == "exit":
+                cmd = input(">> ")
+                continue
+            await server_connect(servers[int(name)])
             break
     _exit(0)
 
 
 async def restart_console(chat):
-    # sendmsg = ""
-    sendmsg = await ainput()
+    sendmsg = ""
     clear()
     for msg in messages:
-        print(msg["username"], ": ", msg["content"])
+        replymsg = msg["replied"]
+        if replymsg != None:
+            print(msg["username"], ": ", msg["content"], " | ответил(-а) на сообщение", replymsg.content)
+        else:
+            print(msg["username"], ": ", msg["content"])
+
     while True:
         if sendmsg != "":
             if sendmsg == "leave":
@@ -108,17 +168,93 @@ async def restart_console(chat):
             user = utils.get(bot.user.friends, name=chat)
             if user != None:
                 await user.send(sendmsg)
-            messages.append({"username": bot.user.name, "content": sendmsg})
+            messages.append({"username": bot.user.name, "content": sendmsg, "replied": None})
             clear()
             for msg in messages:
-                print(msg["username"], ": ", msg["content"])
+                replymsg = msg["replied"]
+                if replymsg != None:
+                    print(msg["username"], ": ", msg["content"], " | ответил(-а) на сообщение", replymsg.content)
+                else:
+                    print(msg["username"], ": ", msg["content"])
             sendmsg = ""
 
         clear()
         for msg in messages:
-            print(msg["username"], ": ", msg["content"])
+            replymsg = msg["replied"]
+            if replymsg != None:
+                print(msg["username"], ": ", msg["content"], " | ответил(-а) на сообщение", replymsg.content)
+            else:
+                print(msg["username"], ": ", msg["content"])
         length = len(messages)
         sendmsg = await ainput()
+
+async def server_chat_connect(chat, server):
+    sendmsg = ""
+    system("cls")
+    global messages
+    for msg in messages:
+        replymsg = msg["replied"]
+        if replymsg != None:
+            print(msg["username"], ": ", msg["content"], " | ответил(-а) на сообщение", replymsg.content)
+        else:
+            print(msg["username"], ": ", msg["content"])
+    while True:
+        if sendmsg != "":
+            if sendmsg == "leave":
+                await start()
+                global current_chat
+                current_chat = None 
+                messages = []
+                break
+            user = utils.get(server.text_channels, name=chat)
+            if user != None:
+                await user.send(sendmsg)
+            messages.append({"username": bot.user.name, "content": sendmsg, "replied": None})
+            system("cls")
+            for msg in messages:
+                replymsg = msg["replied"]
+                if replymsg != None:
+                    print(msg["username"], ": ", msg["content"], " | ответил(-а) на сообщение", replymsg.content)
+                else:
+                    print(msg["username"], ": ", msg["content"])
+            sendmsg = ""
+
+        system("cls")
+        for msg in messages:
+            replymsg = msg["replied"]
+            if replymsg != None:
+                print(msg["username"], ": ", msg["content"], " | ответил(-а) на сообщение", replymsg.content)
+            else:
+                print(msg["username"], ": ", msg["content"])
+        length = len(messages)
+        sendmsg = await ainput()
+        
+async def server_connect(server):
+    global current_chat
+    server_discord = utils.get(bot.guilds, name=server)
+    channels = []
+    for channel in server_discord.text_channels:
+        channels.append(channel.name)
+    for channel in channels:
+        print(f"{channels.index(channel)}. {channel}\n")
+    print("exit - выход")
+    name = input("Выбор: ")
+    if name == "exit":
+        await start()
+    current_chat = utils.get(server_discord.text_channels, name=channels[int(name)])
+    msgs = await current_chat.history(limit=None).flatten() 
+    msgs.reverse()
+    for message in msgs:
+        try:
+            replymsg = await message.channel.fetch_message(message.reference.message_id)
+            messages.append(
+                        {"username": message.author.name,
+                        "content": message.content, "replied": replymsg})
+        except:
+            messages.append(
+                        {"username": message.author.name,
+                        "content": message.content, "replied": None})
+    await server_chat_connect(channels[int(name)], server_discord)
 
 
 def start_t(token):

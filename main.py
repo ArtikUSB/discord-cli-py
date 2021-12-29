@@ -42,7 +42,7 @@ async def on_connect():
 @bot.event
 async def on_message(message):
     if message.content:
-        if message.author == (bot.user.name + "#" + bot.user.discriminator) or message.channel == current_chat or message.author == current_chat:
+        if message.channel == current_chat and message.author != bot.user:
             replymsg = None
             try:
                 replymsg = await message.channel.fetch_message(message.reference.message_id)
@@ -118,6 +118,7 @@ async def start():
             global current_chat
             try:
                 current_chat = utils.get(bot.user.friends, name=friends[int(name)])
+                current_chat = current_chat.dm_channel
             except:
                 print("Ошибка!")
                 await start()

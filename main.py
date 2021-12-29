@@ -149,6 +149,8 @@ async def start():
                 continue
             await server_connect(servers[int(name)])
             break
+        else:
+            cmd = input(">> ")
     _exit(0)
 
 

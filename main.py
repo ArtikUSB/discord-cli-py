@@ -42,7 +42,7 @@ async def on_connect():
 @bot.event
 async def on_message(message):
     if message.content:
-        if message.channel == current_chat and message.author != bot.user:
+        if message.channel == current_chat:
             replymsg = None
             try:
                 replymsg = await message.channel.fetch_message(message.reference.message_id)
@@ -169,7 +169,6 @@ async def restart_console(chat):
             user = utils.get(bot.user.friends, name=chat)
             if user != None:
                 await user.send(sendmsg)
-            messages.append({"username": bot.user.name, "content": sendmsg, "replied": None})
             clear()
             for msg in messages:
                 replymsg = msg["replied"]

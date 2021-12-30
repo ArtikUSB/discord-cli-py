@@ -28,7 +28,7 @@ print(figlet_format("Discord-CLI", font="big"),
 
 bot = commands.Bot(command_prefix=".",
                    self_bot=True)
-messages = []
+
 current_chat = None
 
 
@@ -42,18 +42,13 @@ async def on_connect():
 @bot.event
 async def on_message(message):
     if message.content:
-        if message.channel == current_chat:
+        if message.channel == current_chat and message.author is not bot.user:
             replymsg = None
             try:
                 replymsg = await message.channel.fetch_message(
                     message.reference.message_id)
-                messages.append(
-                    {"username": message.author.name,
-                     "content": message.content, "replied": replymsg})
             except:
-                messages.append(
-                    {"username": message.author.name,
-                     "content": message.content, "replied": None})
+                pass
             if replymsg is not None:
                 print(message.author.name, ": ", "отвечает на сообщение:",
                       replymsg.content + "\n", message.content)
@@ -131,17 +126,20 @@ async def start():
             except:
                 msgs = await current_chat.history(limit=100).flatten()
                 msgs.reverse()
+            clear()
             for message in msgs:
+                replymsg = None
                 try:
                     replymsg = await message.channel.fetch_message(
                         message.reference.message_id)
-                    messages.append(
-                        {"username": message.author.name,
-                         "content": message.content, "replied": replymsg})
                 except:
-                    messages.append(
-                        {"username": message.author.name,
-                         "content": message.content, "replied": None})
+                    pass
+                if replymsg is not None:
+                    print(message.author.name, ": ", "отвечает на сообщение:",
+                    replymsg.content + "\n", message.content)
+                else:
+                    print(message.author.name, ": ", message.content)
+                
             await restart_console(friends[int(name)])
             break
         if cmd == "server":
@@ -162,86 +160,35 @@ async def start():
 
 async def restart_console(chat):
     sendmsg = ""
-    clear()
-    for msg in messages:
-        replymsg = msg["replied"]
-        if replymsg is not None:
-            print(msg["username"], ": ", "отвечает на сообщение:",
-                  replymsg.content + "\n", msg["content"])
-        else:
-            print(msg["username"], ": ", msg["content"])
-
-    while True:
-        if sendmsg != "":
-            if sendmsg == "leave":
-                await start()
-            user = utils.get(bot.user.friends, name=chat)
-            if user is not None:
-                await user.send(sendmsg)
-            clear()
-            for msg in messages:
-                replymsg = msg["replied"]
-                if replymsg is not None:
-                    print(msg["username"], ": ", "отвечает на сообщение:",
-                          replymsg.content + "\n", msg["content"])
-                else:
-                    print(msg["username"], ": ", msg["content"])
-            sendmsg = ""
-
-        clear()
-        for msg in messages:
-            replymsg = msg["replied"]
-            if replymsg is not None:
-                print(msg["username"], ": ", "отвечает на сообщение:",
-                      replymsg.content + "\n", msg["content"])
-            else:
-                print(msg["username"], ": ", msg["content"])
-        length = len(messages)
-        sendmsg = await ainput()
-
-
-async def server_chat_connect(chat, server):
-    sendmsg = ""
-    clear()
-    global messages
-    for msg in messages:
-        replymsg = msg["replied"]
-        if replymsg is not None:
-            print(msg["username"], ": ", "отвечает на сообщение:",
-                  replymsg.content + "\n", msg["content"])
-        else:
-            print(msg["username"], ": ", msg["content"])
     while True:
         if sendmsg != "":
             if sendmsg == "leave":
                 await start()
                 global current_chat
                 current_chat = None
-                messages = []
+                break
+                
+            user = utils.get(bot.user.friends, name=chat)
+            if user is not None:
+                await user.send(sendmsg)
+            sendmsg = ""
+        sendmsg = await ainput(f"{bot.user.name}: ")
+
+
+async def server_chat_connect(chat, server):
+    sendmsg = ""
+    while True:
+        if sendmsg != "":
+            if sendmsg == "leave":
+                await start()
+                global current_chat
+                current_chat = None
                 break
             user = utils.get(server.text_channels, name=chat)
             if user is not None:
                 await user.send(sendmsg)
-            clear()
-            for msg in messages:
-                replymsg = msg["replied"]
-                if replymsg is not None:
-                    print(msg["username"], ": ", "отвечает на сообщение:",
-                          replymsg.content + "\n", msg["content"])
-                else:
-                    print(msg["username"], ": ", msg["content"])
-            sendmsg = ""
-
-        clear()
-        for msg in messages:
-            replymsg = msg["replied"]
-            if replymsg is not None:
-                print(msg["username"], ": ", "отвечает на сообщение:",
-                      replymsg.content + "\n", msg["content"])
-            else:
-                print(msg["username"], ": ", msg["content"])
-        length = len(messages)
-        sendmsg = await ainput()
+            
+        sendmsg = await ainput(f"{bot.user.name}: ")
 
 
 async def server_connect(server):
@@ -260,17 +207,20 @@ async def server_connect(server):
         server_discord.text_channels, name=channels[int(name)])
     msgs = await current_chat.history(limit=100).flatten()
     msgs.reverse()
+    clear()
     for message in msgs:
+        replymsg = None
         try:
             replymsg = await message.channel.fetch_message(
-                message.reference.message_id)
-            messages.append(
-                {"username": message.author.name,
-                 "content": message.content, "replied": replymsg})
+                        message.reference.message_id)
         except:
-            messages.append(
-                {"username": message.author.name,
-                 "content": message.content, "replied": None})
+            pass
+        if replymsg is not None:
+            print(message.author.name, ": ", "отвечает на сообщение:",
+                    replymsg.content + "\n", message.content)
+        else:
+            print(message.author.name, ": ", message.content)
+
     await server_chat_connect(channels[int(name)], server_discord)
 
 

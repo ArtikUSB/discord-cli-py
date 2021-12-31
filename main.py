@@ -157,6 +157,23 @@ async def start():
             break
     _exit(0)
 
+async def editmsg():
+    clientmsgs = []
+    history = await current_chat.history(limit=None).flatten()
+    history.reverse()
+    for message in history:
+        if message.author is bot.user:
+            clientmsgs.append(message)
+    for message in clientmsgs:
+        print(f"{clientmsgs.index(message)}. {message.content}\n")
+    print("exit - выход")
+    msg = int(input("Выбор: "))
+    try:
+        content = input("Содержание: ")
+        await clientmsgs[msg].edit(content=content)
+    except:
+        pass
+
 
 async def restart_console(chat):
     sendmsg = ""
@@ -167,11 +184,14 @@ async def restart_console(chat):
                 global current_chat
                 current_chat = None
                 break
-                
-            user = utils.get(bot.user.friends, name=chat)
-            if user is not None:
-                await user.send(sendmsg)
-            sendmsg = ""
+
+            elif sendmsg == "editmsg":
+                await editmsg()
+            else:  
+                user = utils.get(bot.user.friends, name=chat)
+                if user is not None:
+                    await user.send(sendmsg)
+                sendmsg = ""
         sendmsg = await ainput(f"{bot.user.name}: ")
 
 
@@ -184,9 +204,12 @@ async def server_chat_connect(chat, server):
                 global current_chat
                 current_chat = None
                 break
-            user = utils.get(server.text_channels, name=chat)
-            if user is not None:
-                await user.send(sendmsg)
+            elif sendmsg == "editmsg":
+                await editmsg()
+            else:
+                user = utils.get(server.text_channels, name=chat)
+                if user is not None:
+                    await user.send(sendmsg)
             
         sendmsg = await ainput(f"{bot.user.name}: ")
 

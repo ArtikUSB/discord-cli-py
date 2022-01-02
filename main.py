@@ -92,7 +92,7 @@ async def start():
             for user in bot.user.friends:
                 print(user.name+"#"+user.discriminator + "\n")
             cmd = input(">> ")
-        if cmd == "sendmsg":
+        elif cmd == "sendmsg":
             name = input("Name: ")
             user = utils.get(bot.user.friends, name=name)
             if user is not None:
@@ -101,7 +101,7 @@ async def start():
             else:
                 print("error")
             cmd = input(">> ")
-        if cmd == "listenchat":
+        elif cmd == "listenchat":
             friends = []
             for user in bot.user.friends:
                 friends.append(user.name)
@@ -142,7 +142,7 @@ async def start():
                 
             await restart_console(friends[int(name)])
             break
-        if cmd == "server":
+        elif cmd == "server":
             servers = []
             for server in bot.guilds:
                 servers.append(server.name)
@@ -155,6 +155,19 @@ async def start():
                 continue
             await server_connect(servers[int(name)])
             break
+        elif cmd == "group":
+            channels = bot.private_channels
+            for channel in channels:
+                print(f"{channels.index(channel)}. {channel}\n")
+            print("exit - выход")
+            name = int(input("Выбор: "))
+            if name == "exit":
+                cmd = input(">> ")
+                continue
+            current_chat = channels[name]
+            await group_connect(channels[name].id)
+            break
+
     _exit(0)
 
 async def editmsg():
@@ -204,6 +217,27 @@ async def restart_console(chat):
                 await replymsg()
             else:  
                 user = utils.get(bot.user.friends, name=chat)
+                if user is not None:
+                    await user.send(sendmsg)
+                sendmsg = ""
+        sendmsg = await ainput(f"{bot.user.name}: ")
+
+async def group_connect(chat):
+    sendmsg = ""
+    while True:
+        if sendmsg != "":
+            if sendmsg == "leave":
+                await start()
+                global current_chat
+                current_chat = None
+                break
+
+            elif sendmsg == "editmsg":
+                await editmsg()
+            elif sendmsg == "replymsg":
+                await replymsg()
+            else:  
+                user = utils.get(bot.private_channels, id=chat)
                 if user is not None:
                     await user.send(sendmsg)
                 sendmsg = ""

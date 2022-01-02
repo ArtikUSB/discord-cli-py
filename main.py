@@ -174,6 +174,19 @@ async def editmsg():
     except:
         pass
 
+async def replymsg():
+    history = await current_chat.history(limit=None).flatten()
+    history.reverse()
+    for message in history:
+        print(f"{history.index(message)}. {message.content}\n")
+    print("exit - выход")
+    msg = int(input("Выбор: "))
+    try:
+        content = input("Содержание: ")
+        await history[msg].reply(content=content)
+    except:
+        pass
+
 
 async def restart_console(chat):
     sendmsg = ""
@@ -187,6 +200,8 @@ async def restart_console(chat):
 
             elif sendmsg == "editmsg":
                 await editmsg()
+            elif sendmsg == "replymsg":
+                await replymsg()
             else:  
                 user = utils.get(bot.user.friends, name=chat)
                 if user is not None:
@@ -206,6 +221,8 @@ async def server_chat_connect(chat, server):
                 break
             elif sendmsg == "editmsg":
                 await editmsg()
+            elif sendmsg == "replymsg":
+                await replymsg()
             else:
                 user = utils.get(server.text_channels, name=chat)
                 if user is not None:

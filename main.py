@@ -165,6 +165,25 @@ async def start():
                 cmd = input(">> ")
                 continue
             current_chat = channels[name]
+            try:
+                msgs = await current_chat.history(limit=None).flatten()
+                msgs.reverse()
+            except:
+                msgs = await current_chat.history(limit=100).flatten()
+                msgs.reverse()
+            clear()
+            for message in msgs:
+                replymsg = None
+                try:
+                    replymsg = await message.channel.fetch_message(
+                        message.reference.message_id)
+                except:
+                    pass
+                if replymsg is not None:
+                    print(message.author.name, ": ", "отвечает на сообщение:",
+                    replymsg.content + "\n", message.content)
+                else:
+                    print(message.author.name, ": ", message.content)
             await group_connect(channels[name].id)
             break
 

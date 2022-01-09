@@ -1,40 +1,64 @@
-from discord import (utils,
-                     errors)
-import aiohttp
-from os import (system,
-                _exit,
-                name)
+################################################################
+################################################################
+################################################################
+####                      TO-DO                             ####
+####  1. добавить цвет ника по роли                         ####
+####  2. .....                                              ####
+####                                                        ####
+####                                                        ####
+####                                                        ####
+####                                                        ####
+####                                                        ####
+####                                                        ####
+####                                                        ####
+################################################################
+################################################################
+################################################################
+
+from json import dump, load
+from os import _exit, name, system
+
+from aioconsole.stream import ainput, aprint
+from discord import ChannelType, errors, utils
 from discord.ext import commands
 from pyfiglet import figlet_format
-from asgiref.sync import async_to_sync
-from aioconsole.stream import (ainput,
-                               aprint)
-from json import (load,
-                  dump)
+from rich.console import Console
+
+from custom import Edit
+
 # pip install asgiref
 
 
 def clear():
-    if name == 'nt':
-        system('cls')
+    if name == "nt":
+        system("cls")
     else:
-        system('clear')
+        system("clear")
 
+
+def custom_print(c, text: str):
+    console = Console()
+    console.print(text, style=c)
 
 clear()
-print(figlet_format("Discord-CLI", font="big"),
-      figlet_format("Version 1.0.0"), figlet_format("by aylonnn and PosReady"))
+print(figlet_format("Discord-CLI", font="big"))
 
 
-bot = commands.Bot(command_prefix=".",
-                   self_bot=True)
-
+bot = commands.Bot(command_prefix="", self_bot=True)
+messages = []
 current_chat = None
+edit = Edit()
 
 
 @bot.event
 async def on_connect():
-    print("\nDiscord CLI has been started!")
+    custom_print(
+        "#46F079",
+        f"""
+        *********************************
+        * Discord CLI has been started! *
+        *********************************""",
+    )
     await show_profile()
     await start()
 
@@ -43,17 +67,34 @@ async def on_connect():
 async def on_message(message):
     if message.content:
         if message.channel == current_chat and message.author is not bot.user:
+            colour = message.author.name.color.to_rgb()
             replymsg = None
             try:
                 replymsg = await message.channel.fetch_message(
-                    message.reference.message_id)
+                    message.reference.message_id
+                )
+                messages.append(
+                    {
+                        "username": message.author.name,
+                        "content": message.content,
+                        "replied": replymsg,
+                        "color": f"rgb({colour[0]},{colour[1]},{colour[2]})",
+                    }
+                )
             except:
-                pass
+                messages.append(
+                    {
+                        "username": message.author.name,
+                        "content": message.content,
+                        "replied": None,
+                        "color": f"rgb({colour[0]},{colour[1]},{colour[2]})", # ставить ли виндаус 11? можно
+                    }
+                )
             if replymsg is not None:
-                print(message.author.name, ": ", "отвечает на сообщение:",
-                      replymsg.content + "\n", message.content)
+                custom_print(colour, f"{message.author.name} : отвечает на сообщение: {replymsg.content}\n {message.content}")
             else:
-                print(message.author.name, ": ", message.content)
+                # ты чо наделол
+                custom_print(colour, f"{message.author.name} : {message.content}")
 
             await bot.wait_until_ready()
 
@@ -61,46 +102,74 @@ async def on_message(message):
 async def show_profile():
     tag = bot.user.name + "#" + bot.user.discriminator
     avatar = bot.user.avatar_url
-    email = bot.user.email
     userid = bot.user.id
-    friends = bot.user.friends
 
-    await aprint(f"\nВаш профиль:"
-                 + f"\nНикнейм: {tag}"
-                 + f"\nАватарка: {avatar}"
-                 + f"\nАйди: {userid}"
-                 + f"\nДрузей: {len(bot.user.friends)}"
-                 + f"\nСерверов: {len(bot.guilds)}")
+    custom_print(
+        "rgb(237,189,14)",
+        f"""
+        *****************************
+        *        Ваш профиль        *
+        *  Никнейм: {tag}    *
+        *  Аватарка: {avatar} *
+        *  Айди: {userid} *
+        *  Друзей: {len(bot.user.friends)}               *
+        *  Серверов: {len(bot.guilds)}             *
+        *****************************
+        """,
+    )
 
 
 async def start():
-    print('''
-        *****************************************
-        *        Список комманд                 *
-        *                                       *
-        * 1. friends - список друзей            *
-        *                                       *
-        * 2. listenchat - чат с другом          *
-        *                                       *
-        * 3. server - присоединиться к серверу  *
-        *                                       *
-        *****************************************
-        ''')
+    custom_print(
+        "rgb(237,189,14)",
+        """
+        ******************************************
+        *        Список комманд                  *
+        *                                        *
+        *  friends - список друзей               *
+        *                                        *
+        *  listenchat - чат с другом             *
+        *                                        *
+        *  server - написать на сервере          *
+        *                                        *
+        *  change - изменить что-то в аккаунте   *
+        *                                        *
+        *  guild - написать в групповом чате     *
+        ******************************************
+        """,
+    )
     cmd = input(">> ")
     while cmd != "exit":
         if cmd == "friends":
+            custom_print("rgb(237,189,14)", "********************************")
             for user in bot.user.friends:
-                print(user.name+"#"+user.discriminator + "\n")
-            cmd = input(">> ")
+                colour = user.color.to_rgb()
+                custom_print(
+                    f"rgb({colour[0]},{colour[1]},{colour[2]})",
+                    "* " + user.name + "#" + user.discriminator + " *",
+                )
+            custom_print("rgb(237,189,14)", "********************************")
+            await start()
         elif cmd == "sendmsg":
-            name = input("Name: ")
+            name = input(
+                """
+                ********************
+                * Введите имя ниже *
+                ********************\n>> 
+                """,
+            )
             user = utils.get(bot.user.friends, name=name)
             if user is not None:
-                msg = input("Сообщение: ")
+                msg = input(
+                    """
+                    ***************************
+                    * Введите сообщение ниже *
+                    ***************************\n>> """,
+                )
                 await user.send(msg)
             else:
                 print("error")
-            cmd = input(">> ")
+            await start()
         elif cmd == "listenchat":
             friends = []
             for user in bot.user.friends:
@@ -108,17 +177,45 @@ async def start():
             for friend in friends:
                 print(f"{friends.index(friend)}. {friend}\n")
             print("exit - выход")
-            name = input("Выбор: ")
+            name = input(
+                """
+                ******************************
+                * Выберите лс с другом ниже *"
+                ******************************\n>> """,
+            )
             if name == "exit":
+                custom_print(
+                    "rgb(237,189,14)",
+                    """
+        ******************************************
+        *        Список комманд                  *
+        *                                        *
+        *  friends - список друзей               *
+        *                                        *
+        *  listenchat - чат с другом             *
+        *                                        *
+        *  server - написать на сервере          *
+        *                                        *
+        *  change - изменить что-то в аккаунте   *
+        *                                        *
+        *  guild - написать в групповом чате     *
+        ******************************************
+        """,
+                )
                 cmd = input(">> ")
                 continue
             global current_chat
             try:
-                current_chat = utils.get(
-                    bot.user.friends, name=friends[int(name)])
+                current_chat = utils.get(bot.user.friends, name=friends[int(name)])
                 current_chat = current_chat.dm_channel
             except:
-                print("Ошибка!")
+                custom_print(
+                    "rgb(237,189,14)",
+                    """
+                    ***********
+                    * Ошибка! *
+                    ***********""",
+                )
                 await start()
             try:
                 msgs = await current_chat.history(limit=None).flatten()
@@ -126,22 +223,90 @@ async def start():
             except:
                 msgs = await current_chat.history(limit=100).flatten()
                 msgs.reverse()
-            clear()
             for message in msgs:
-                replymsg = None
                 try:
+                    colour = message.author.color.to_rgb()
                     replymsg = await message.channel.fetch_message(
-                        message.reference.message_id)
+                        message.reference.message_id
+                    )
+                    messages.append(
+                        {
+                            "username": message.author.name,
+                            "content": message.content,
+                            "replied": replymsg,
+                            "color": f"rgb({colour[0]},{colour[1]},{colour[2]})",
+                        }
+                    )
                 except:
-                    pass
-                if replymsg is not None:
-                    print(message.author.name, ": ", "отвечает на сообщение:",
-                    replymsg.content + "\n", message.content)
-                else:
-                    print(message.author.name, ": ", message.content)
-                
+                    colour = message.author.color.to_rgb()
+                    messages.append(
+                        {
+                            "username": message.author.name,
+                            "content": message.content,
+                            "replied": None,
+                            "color": f"rgb({colour[0]},{colour[1]},{colour[2]})",
+                        }
+                    )
             await restart_console(friends[int(name)])
             break
+        elif cmd == "change":
+            custom_print(
+                "rgb(237,189,14)",
+                """
+        **********************************************
+        *        Список комманд                      *
+        *                                            *
+        * 1. name - изменить имя на аккаунте         *
+        *                                            *
+        * 2. password - изменить пароль на аккаунте  *
+        *                                            *
+        * 3. hypesquad - изменить значок HypeSquad   *
+        *                                            *
+        * 4. email - изменить email аккаунта         * 
+        **********************************************
+            """,
+            )
+            ans = input(">> ")
+            while True:
+                if ans == "name":
+                    await edit.name(bot.user)
+                    return await start()
+                elif ans == "password":
+                    await edit.password(bot.user)
+                    return await start()
+                elif ans == "hypesquad":
+                    await edit.house(bot.user)
+                    return await start()
+                elif ans == "email":
+                    await edit.email(bot.user)
+                    return await start()
+                else:
+                    custom_print(
+                        "#F04646",
+                        """
+        *****************************************************************
+        * Ошибка, возможно вы написали не правильно. Попробуйте еще раз *
+        *****************************************************************
+                        """,
+                    )
+                    custom_print(
+                        "rgb(237,189,14)",
+                        """
+        **********************************************
+        *        Список комманд                      *
+        *                                            *
+        * 1. name - изменить имя на аккаунте         *
+        *                                            *
+        * 2. password - изменить пароль на аккаунте  *
+        *                                            *
+        * 3. hypesquad - изменить значок HypeSquad   *
+        *                                            *
+        * 4. email - изменить email аккаунта         *
+        **********************************************
+            """,
+                    )
+                    ans = input(">> ")
+
         elif cmd == "server":
             servers = []
             for server in bot.guilds:
@@ -149,45 +314,61 @@ async def start():
             for server in servers:
                 print(f"{servers.index(server)}. {server}\n")
             print("exit - выход")
-            name = input("Выбор: ")
+            name = int(
+                input(
+                    """
+        *******************
+        * Выберите число  * 
+        *******************
+                    \n>> """,
+                )
+            )
             if name == "exit":
-                cmd = input(">> ")
+                await start()
                 continue
             await server_connect(servers[int(name)])
             break
         elif cmd == "group":
+            groups = []
             channels = bot.private_channels
-            for channel in channels:
-                print(f"{channels.index(channel)}. {channel}\n")
+            for _channel in channels:
+                if bool(_channel.type == ChannelType.group):
+                    groups.append(_channel.name)
+            for group in groups:
+                print(f"{groups.index(group)}. {group}\n")
             print("exit - выход")
-            name = int(input("Выбор: "))
+            name = int(
+                input(
+                    """
+        *******************
+        * Выберите число  * 
+        *******************
+                    \n>> """,
+                )
+            )
             if name == "exit":
-                cmd = input(">> ")
-                continue
+                await start()
             current_chat = channels[name]
-            try:
-                msgs = await current_chat.history(limit=None).flatten()
-                msgs.reverse()
-            except:
-                msgs = await current_chat.history(limit=100).flatten()
-                msgs.reverse()
+            msgs = await current_chat.history(limit=100).flatten()
+            msgs.reverse()
             clear()
             for message in msgs:
+                colour = message.author.color.to_rgb()
                 replymsg = None
                 try:
                     replymsg = await message.channel.fetch_message(
-                        message.reference.message_id)
+                        message.reference.message_id
+                    )
                 except:
                     pass
                 if replymsg is not None:
-                    print(message.author.name, ": ", "отвечает на сообщение:",
-                    replymsg.content + "\n", message.content)
+                    custom_print(colour, f"{message.author.name} : отвечает на сообщение: {replymsg.content}\n {message.content}")
                 else:
-                    print(message.author.name, ": ", message.content)
+                    custom_print(colour, f"{message.author.name} : {message.content}")
             await group_connect(channels[name].id)
             break
-
     _exit(0)
+
 
 async def editmsg():
     clientmsgs = []
@@ -199,12 +380,27 @@ async def editmsg():
     for message in clientmsgs:
         print(f"{clientmsgs.index(message)}. {message.content}\n")
     print("exit - выход")
-    msg = int(input("Выбор: "))
+    msg = int(
+        input(
+            """
+        *******************
+        * Выберите число  * 
+        *******************
+                    \n>> """,
+        )
+    )
     try:
-        content = input("Содержание: ")
+        content = input(
+            """
+        ****************************
+        * Напишите новое сообщение *
+        ****************************
+        """,
+        )
         await clientmsgs[msg].edit(content=content)
     except:
         pass
+
 
 async def replymsg():
     history = await current_chat.history(limit=None).flatten()
@@ -212,34 +408,27 @@ async def replymsg():
     for message in history:
         print(f"{history.index(message)}. {message.content}\n")
     print("exit - выход")
-    msg = int(input("Выбор: "))
+    msg = int(
+        input(
+            """
+        *******************
+        * Выберите число  * 
+        *******************
+                    \n>> """,
+        )
+    )
     try:
-        content = input("Содержание: ")
+        content = input(
+            """
+        *******************************
+        * Напишите ответ на сообщение *
+        *******************************
+        """,
+        )
         await history[msg].reply(content=content)
     except:
         pass
 
-
-async def restart_console(chat):
-    sendmsg = ""
-    while True:
-        if sendmsg != "":
-            if sendmsg == "leave":
-                await start()
-                global current_chat
-                current_chat = None
-                break
-
-            elif sendmsg == "editmsg":
-                await editmsg()
-            elif sendmsg == "replymsg":
-                await replymsg()
-            else:  
-                user = utils.get(bot.user.friends, name=chat)
-                if user is not None:
-                    await user.send(sendmsg)
-                sendmsg = ""
-        sendmsg = await ainput(f"{bot.user.name}: ")
 
 async def group_connect(chat):
     sendmsg = ""
@@ -255,7 +444,7 @@ async def group_connect(chat):
                 await editmsg()
             elif sendmsg == "replymsg":
                 await replymsg()
-            else:  
+            else:
                 user = utils.get(bot.private_channels, id=chat)
                 if user is not None:
                     await user.send(sendmsg)
@@ -263,25 +452,92 @@ async def group_connect(chat):
         sendmsg = await ainput(f"{bot.user.name}: ")
 
 
+async def restart_console(chat):
+    sendmsg = ""
+    clear()
+    for msg in messages:
+        colour = msg["color"]
+        replymsg = msg["replied"]
+        if replymsg is not None:
+            custom_print(colour, f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
+        else:
+            custom_print(colour, f"{msg['username']} : {msg['content']}")
+        sendmsg = await ainput()
+
+    while True:
+        if sendmsg != "":
+            if sendmsg == "leave":
+                await start()
+            user = utils.get(bot.user.friends, name=chat)
+            if user is not None:
+                await user.send(sendmsg)
+            clear()
+            for msg in messages:
+                colour = msg["color"]
+                replymsg = msg["replied"]
+                if replymsg is not None:
+                    custom_print(colour, f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
+                else:
+                    custom_print(colour, f"{msg['username']} : {msg['content']}")
+            sendmsg = ""
+
+        clear()
+        for msg in messages:
+            colour = msg["color"]
+            replymsg = msg["replied"]
+            if replymsg is not None:
+                custom_print(colour, f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
+            else:
+                custom_print(colour, f"{msg['username']} : {msg['content']}")
+        sendmsg = await ainput()
+
+
 async def server_chat_connect(chat, server):
     sendmsg = ""
+    clear()
+    global messages
+    for msg in messages:
+        replymsg = msg["replied"]
+        if replymsg is not None:
+            print(
+                msg["username"],
+                ": ",
+                "отвечает на сообщение:",
+                replymsg.content + "\n",
+                msg["content"],
+            )
+        else:
+            print(msg["username"], ": ", msg["content"])
     while True:
         if sendmsg != "":
             if sendmsg == "leave":
                 await start()
                 global current_chat
                 current_chat = None
+                messages = []
                 break
-            elif sendmsg == "editmsg":
-                await editmsg()
-            elif sendmsg == "replymsg":
-                await replymsg()
+            user = utils.get(server.text_channels, name=chat)
+            if user is not None:
+                await user.send(sendmsg)
+            clear()
+            for msg in messages:
+                replymsg = msg["replied"]
+                if replymsg is not None:
+                    custom_print(msg["color"], f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
+                else:
+                    custom_print(msg["color"], f"{msg['username']} : {msg['content']}")
+
+            sendmsg = ""
+
+        clear()
+        for msg in messages:
+            replymsg = msg["replied"]
+            if replymsg is not None:
+                custom_print(msg['color'], f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
             else:
-                user = utils.get(server.text_channels, name=chat)
-                if user is not None:
-                    await user.send(sendmsg)
-            
-        sendmsg = await ainput(f"{bot.user.name}: ")
+                custom_print(msg['color'], f"{msg['username']} : {msg['content']}")
+
+        sendmsg = await ainput()
 
 
 async def server_connect(server):
@@ -293,35 +549,70 @@ async def server_connect(server):
     for channel in channels:
         print(f"{channels.index(channel)}. {channel}\n")
     print("exit - выход")
-    name = input("Выбор: ")
+    name = int(
+        input(
+            """
+        *******************
+        * Выберите число  * 
+        *******************
+                        \n>> """
+        )
+    )
     if name == "exit":
         await start()
-    current_chat = utils.get(
-        server_discord.text_channels, name=channels[int(name)])
+    current_chat = utils.get(server_discord.text_channels, name=channels[int(name)])
     msgs = await current_chat.history(limit=100).flatten()
     msgs.reverse()
-    clear()
     for message in msgs:
-        replymsg = None
+        colour = message.author.color.to_rgb()
         try:
-            replymsg = await message.channel.fetch_message(
-                        message.reference.message_id)
+            replymsg = await message.channel.fetch_message(message.reference.message_id)
+            messages.append(
+                {
+                    "username": message.author.name,
+                    "content": message.content,
+                    "replied": replymsg,
+                    "color": f"rgb({colour[0]},{colour[1]},{colour[2]})"
+                }
+            )
         except:
-            pass
-        if replymsg is not None:
-            print(message.author.name, ": ", "отвечает на сообщение:",
-                    replymsg.content + "\n", message.content)
-        else:
-            print(message.author.name, ": ", message.content)
-
+            messages.append(
+                {
+                    "username": message.author.name,
+                    "content": message.content,
+                    "replied": None,
+                    "color": f"rgb({colour[0]},{colour[1]},{colour[2]})"
+                }
+            )
     await server_chat_connect(channels[int(name)], server_discord)
+
+
+async def get_user_info(user):
+    user = bot.get_user(user)
+    user_profile = await bot.fetch_user_profile(user.id)
+    bio = user_profile.bio
+    return await aprint(
+        f"""
+        ********************************************************************
+        * Имя#тег: {user}                                              *
+        * ID: {user.id}                                           *
+        * Аватар: {user.avatar_url}
+        *                                                                  *
+        * Дефолтный аватар: {user.default_avatar_url} *
+        * Биография: {bio}     *
+        * Бот? {'Да' if bool(user.bot) else 'Нет'}                                                         *
+        * Открыт лс с ним? {'Да' if bool(user.dm_channel) else 'Нет'}                                              *
+        * Заблокирован? {'Да' if user.is_blocked() else 'Нет'}                                                *
+        * Вы с ним друг? {'Да' if user.is_friend() else 'Нет'}                                                *
+        ********************************************************************"""
+    )
 
 
 def start_t(token):
     try:
         bot.run(token)
     except errors.LoginFailure:
-        print(f"Ошибка!")
+        print(f"Ошибка! Не валид токен")
 
 
 with open("config.json", "r") as json_file:

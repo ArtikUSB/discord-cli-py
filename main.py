@@ -2,7 +2,7 @@
 ################################################################
 ################################################################
 ####                      TO-DO                             ####
-####  1. добавить цвет ника по роли                         ####
+####  1.                                                    ####
 ####  2. .....                                              ####
 ####                                                        ####
 ####                                                        ####
@@ -67,7 +67,6 @@ async def on_connect():
 async def on_message(message):
     if message.content:
         if message.channel == current_chat and message.author is not bot.user:
-            colour = message.author.name.color.to_rgb()
             replymsg = None
             try:
                 replymsg = await message.channel.fetch_message(
@@ -77,8 +76,7 @@ async def on_message(message):
                     {
                         "username": message.author.name,
                         "content": message.content,
-                        "replied": replymsg,
-                        "color": f"rgb({colour[0]},{colour[1]},{colour[2]})",
+                        "replied": replymsg.content,
                     }
                 )
             except:
@@ -87,14 +85,13 @@ async def on_message(message):
                         "username": message.author.name,
                         "content": message.content,
                         "replied": None,
-                        "color": f"rgb({colour[0]},{colour[1]},{colour[2]})", # ставить ли виндаус 11? можно
                     }
                 )
             if replymsg is not None:
-                custom_print(colour, f"{message.author.name} : отвечает на сообщение: {replymsg.content}\n {message.content}")
+                print(f"{message.author.name} : отвечает на сообщение: {replymsg}\n {message.content}")
             else:
                 # ты чо наделол
-                custom_print(colour, f"{message.author.name} : {message.content}")
+                print(f"{message.author.name} : {message.content}")
 
             await bot.wait_until_ready()
 
@@ -143,11 +140,7 @@ async def start():
         if cmd == "friends":
             custom_print("rgb(237,189,14)", "********************************")
             for user in bot.user.friends:
-                colour = user.color.to_rgb()
-                custom_print(
-                    f"rgb({colour[0]},{colour[1]},{colour[2]})",
-                    "* " + user.name + "#" + user.discriminator + " *",
-                )
+                print("* " + user.name + "#" + user.discriminator + " *")
             custom_print("rgb(237,189,14)", "********************************")
             await start()
         elif cmd == "sendmsg":
@@ -225,7 +218,6 @@ async def start():
                 msgs.reverse()
             for message in msgs:
                 try:
-                    colour = message.author.color.to_rgb()
                     replymsg = await message.channel.fetch_message(
                         message.reference.message_id
                     )
@@ -233,18 +225,15 @@ async def start():
                         {
                             "username": message.author.name,
                             "content": message.content,
-                            "replied": replymsg,
-                            "color": f"rgb({colour[0]},{colour[1]},{colour[2]})",
+                            "replied": replymsg.content,
                         }
                     )
                 except:
-                    colour = message.author.color.to_rgb()
                     messages.append(
                         {
                             "username": message.author.name,
                             "content": message.content,
                             "replied": None,
-                            "color": f"rgb({colour[0]},{colour[1]},{colour[2]})",
                         }
                     )
             await restart_console(friends[int(name)])
@@ -353,7 +342,6 @@ async def start():
             msgs.reverse()
             clear()
             for message in msgs:
-                colour = message.author.color.to_rgb()
                 replymsg = None
                 try:
                     replymsg = await message.channel.fetch_message(
@@ -362,9 +350,9 @@ async def start():
                 except:
                     pass
                 if replymsg is not None:
-                    custom_print(colour, f"{message.author.name} : отвечает на сообщение: {replymsg.content}\n {message.content}")
+                    print(f"{message.author.name} : отвечает на сообщение: {replymsg.content}\n {message.content}")
                 else:
-                    custom_print(colour, f"{message.author.name} : {message.content}")
+                    print(f"{message.author.name} : {message.content}")
             await group_connect(channels[name].id)
             break
     _exit(0)
@@ -456,13 +444,12 @@ async def restart_console(chat):
     sendmsg = ""
     clear()
     for msg in messages:
-        colour = msg["color"]
         replymsg = msg["replied"]
         if replymsg is not None:
-            custom_print(colour, f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
+            print(f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
         else:
-            custom_print(colour, f"{msg['username']} : {msg['content']}")
-        sendmsg = await ainput()
+            print(f"{msg['username']} : {msg['content']}")
+    sendmsg = await ainput()
 
     while True:
         if sendmsg != "":
@@ -473,22 +460,20 @@ async def restart_console(chat):
                 await user.send(sendmsg)
             clear()
             for msg in messages:
-                colour = msg["color"]
                 replymsg = msg["replied"]
                 if replymsg is not None:
-                    custom_print(colour, f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
+                    print(f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
                 else:
-                    custom_print(colour, f"{msg['username']} : {msg['content']}")
+                    print(f"{msg['username']} : {msg['content']}")
             sendmsg = ""
 
         clear()
         for msg in messages:
-            colour = msg["color"]
             replymsg = msg["replied"]
             if replymsg is not None:
-                custom_print(colour, f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
+                print(f"{msg['username']} : отвечает на сообщение: {replymsg}\n {msg['content']}")
             else:
-                custom_print(colour, f"{msg['username']} : {msg['content']}")
+                print(f"{msg['username']} : {msg['content']}")
         sendmsg = await ainput()
 
 
@@ -523,9 +508,9 @@ async def server_chat_connect(chat, server):
             for msg in messages:
                 replymsg = msg["replied"]
                 if replymsg is not None:
-                    custom_print(msg["color"], f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
+                    print(f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
                 else:
-                    custom_print(msg["color"], f"{msg['username']} : {msg['content']}")
+                    print(f"{msg['username']} : {msg['content']}")
 
             sendmsg = ""
 
@@ -533,9 +518,9 @@ async def server_chat_connect(chat, server):
         for msg in messages:
             replymsg = msg["replied"]
             if replymsg is not None:
-                custom_print(msg['color'], f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
+                print(f"{msg['username']} : отвечает на сообщение: {replymsg.content}\n {msg['content']}")
             else:
-                custom_print(msg['color'], f"{msg['username']} : {msg['content']}")
+                print(f"{msg['username']} : {msg['content']}")
 
         sendmsg = await ainput()
 
@@ -564,7 +549,6 @@ async def server_connect(server):
     msgs = await current_chat.history(limit=100).flatten()
     msgs.reverse()
     for message in msgs:
-        colour = message.author.color.to_rgb()
         try:
             replymsg = await message.channel.fetch_message(message.reference.message_id)
             messages.append(
@@ -572,7 +556,6 @@ async def server_connect(server):
                     "username": message.author.name,
                     "content": message.content,
                     "replied": replymsg,
-                    "color": f"rgb({colour[0]},{colour[1]},{colour[2]})"
                 }
             )
         except:
@@ -581,7 +564,6 @@ async def server_connect(server):
                     "username": message.author.name,
                     "content": message.content,
                     "replied": None,
-                    "color": f"rgb({colour[0]},{colour[1]},{colour[2]})"
                 }
             )
     await server_chat_connect(channels[int(name)], server_discord)
